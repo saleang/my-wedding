@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="km">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>គ្រប់គ្រងភ្ញៀវអាពាហ៍ពិពាហ៍</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Khmer', system-ui, -apple-system, sans-serif;
+        }
+
+        .gradient-header {
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Header -->
+    <header class="gradient-header text-white shadow-xl">
+        <div class="container mx-auto px-6 py-8">
+            <h1 class="text-4xl font-bold">💒 គ្រប់គ្រងភ្ញៀវពិធីអាពាហ៍ពិពាហ៍</h1>
+            <p class="mt-2 text-purple-100 text-lg">គ្រប់គ្រងបញ្ជីភ្ញៀវ និងស្ថានភាពចូលរួម</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-10 max-w-7xl">
+
+        <!-- Actions -->
+        <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <button onclick="openAddModal()"
+                class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-xl font-medium shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                + បន្ថែមភ្ញៀវថ្មី
+            </button>
+            <button onclick="loadGuests()"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl font-medium shadow-md hover:shadow-lg transition-all">
+                ↻ ធ្វើសមកាលកម្មទិន្នន័យ
+            </button>
+        </div>
+
+        <!-- API Warning -->
+        <div class="bg-amber-50 border-l-4 border-amber-400 p-5 mb-8 rounded-r-xl">
+            <p class="text-amber-800">
+                <strong>សំខាន់៖</strong> សូមកែប្រែ <code
+                    class="bg-amber-100 px-2 py-0.5 rounded font-mono">API_URL</code> នៅក្នុងផ្នែក script ទៅជា URL របស់
+                Google Apps Script របស់អ្នក!
+            </p>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="bg-white rounded-2xl shadow-xl p-16 text-center">
+            <div
+                class="inline-block animate-spin rounded-full h-20 w-20 border-8 border-purple-200 border-t-purple-600">
+            </div>
+            <p class="mt-6 text-gray-600 text-xl font-medium">កំពុងផ្ទុកបញ្ជីភ្ញៀវ...</p>
+        </div>
+
+        <!-- Error -->
+        <div id="error" class="hidden bg-red-50 border-l-4 border-red-500 p-8 rounded-2xl shadow">
+            <div class="flex items-start">
+                <svg class="h-8 w-8 text-red-600 mr-4 flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-red-800 text-lg font-medium" id="errorMessage"></p>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div id="guestsTable" class="hidden bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-max">
+                    <thead class="gradient-header">
+                        <tr>
+                            <th class="px-8 py-5 text-left text-sm font-semibold uppercase tracking-wider">ល.រ</th>
+                            <th class="px-8 py-5 text-left text-sm font-semibold uppercase tracking-wider">ឈ្មោះ</th>
+                            <th class="px-8 py-5 text-left text-sm font-semibold uppercase tracking-wider">ទូរស័ព្ទ</th>
+                            <th class="px-8 py-5 text-left text-sm font-semibold uppercase tracking-wider">ស្ថានភាព</th>
+                            <th class="px-8 py-5 text-left text-sm font-semibold uppercase tracking-wider">សកម្មភាព</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guestsBody" class="divide-y divide-gray-100">
+                        <!-- Rows inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden bg-white rounded-2xl shadow-xl p-16 text-center">
+            <svg class="mx-auto h-32 w-32 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <h3 class="mt-6 text-2xl font-bold text-gray-900">មិនទាន់មានភ្ញៀវនៅឡើយ</h3>
+            <p class="mt-3 text-gray-600 text-lg">ចាប់ផ្តើមដោយបន្ថែមភ្ញៀវដំបូងរបស់អ្នក!</p>
+            <button onclick="openAddModal()"
+                class="mt-8 bg-purple-600 hover:bg-purple-700 text-white px-10 py-4 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all">
+                + បន្ថែមភ្ញៀវ
+            </button>
+        </div>
+    </main>
+
+    <!-- Add/Edit Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="gradient-header px-8 py-6">
+                <h2 id="modalTitle" class="text-3xl font-bold">បន្ថែមភ្ញៀវ</h2>
+            </div>
+            <form id="guestForm" onsubmit="saveGuest(event)" class="p-8 space-y-6">
+                <input type="hidden" id="guestId">
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">ឈ្មោះ <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" id="guestName" required
+                        class="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">លេខទូរស័ព្ទ</label>
+                    <input type="tel" id="guestPhone" placeholder="012 345 678"
+                        class="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-4 rounded-xl font-medium transition">
+                        បោះបង់
+                    </button>
+                    <button type="submit"
+                        class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-medium transition shadow-md">
+                        រក្សាទុក
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Modal -->
+    <div id="viewModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="gradient-header px-8 py-6">
+                <h2 class="text-3xl font-bold">ព័ត៌មានភ្ញៀវ</h2>
+            </div>
+            <div class="p-8 space-y-6">
+                <div id="viewContent" class="space-y-6 text-gray-800"></div>
+                <button onclick="closeViewModal()"
+                    class="w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-medium transition shadow-md">
+                    បិទ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // CONFIGURATION - សូមកែប្រែ
+        // ========================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzDWpn1tvbQfTU4AFjQlRTfnKOa-C7IDc1W-wXUOAA1_kRB4J6k5nGUr9eVQOobsIXu/exec';
+
+        const SITE_URL = window.location.origin + window.location.pathname.replace('admin.html', '');
+
+        let currentGuests = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadGuests();
+        });
+
+        async function loadGuests() {
+            showLoading();
+            hideError();
+
+            try {
+                const res = await fetch(`${API_URL}?action=getGuests`);
+                const result = await res.json();
+
+                if (result.success) {
+                    currentGuests = result.data || [];
+                    renderGuests(currentGuests);
+                } else {
+                    showError(result.error || 'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ');
+                }
+            } catch (err) {
+                console.error(err);
+                showError('មិនអាចភ្ជាប់ទៅ API បាន។ សូមពិនិត្យ URL។');
+            }
+        }
+
+        function renderGuests(guests) {
+            hideLoading();
+
+            const tbody = document.getElementById('guestsBody');
+            const table = document.getElementById('guestsTable');
+            const empty = document.getElementById('emptyState');
+
+            if (guests.length === 0) {
+                table.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            table.classList.remove('hidden');
+
+            tbody.innerHTML = guests.map(guest => {
+                const invLink = `${SITE_URL}invitation.html?token=${guest.token}`;
+
+                return `
+                    <tr class="hover:bg-purple-50/50 transition">
+                        <td class="px-8 py-5 text-gray-900 font-medium">#${guest.id}</td>
+                        <td class="px-8 py-5 font-medium text-gray-900">${escapeHtml(guest.name)}</td>
+                        <td class="px-8 py-5 text-gray-700">${escapeHtml(guest.phone) || '—'}</td>
+                        <td class="px-8 py-5">
+                            ${guest.confirmed
+                        ? '<span class="inline-flex px-4 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-800">បានបញ្ជាក់</span>'
+                        : '<span class="inline-flex px-4 py-1.5 rounded-full text-sm font-medium bg-amber-100 text-amber-800">មិនទាន់បញ្ជាក់</span>'
+                    }
+                        </td>
+                        <td class="px-8 py-5">
+                            <div class="flex gap-3">
+                                <button onclick='viewGuest(${JSON.stringify(guest)})' 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition">
+                                    មើល
+                                </button>
+                                <button onclick='editGuest(${JSON.stringify(guest)})' 
+                                        class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition">
+                                    កែ
+                                </button>
+                                <button onclick="deleteGuest(${guest.id}, '${escapeHtml(guest.name)}')" 
+                                        class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition">
+                                    លុប
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'បន្ថែមភ្ញៀវថ្មី';
+            document.getElementById('guestForm').reset();
+            document.getElementById('guestId').value = '';
+            showModal();
+        }
+
+        function editGuest(guest) {
+            document.getElementById('modalTitle').textContent = 'កែសម្រួលភ្ញៀវ';
+            document.getElementById('guestId').value = guest.id;
+            document.getElementById('guestName').value = guest.name;
+            document.getElementById('guestPhone').value = guest.phone || '';
+            showModal();
+        }
+
+        function viewGuest(guest) {
+            const invLink = `${SITE_URL}invitation.html?token=${guest.token}`;
+
+            document.getElementById('viewContent').innerHTML = `
+                <div class="space-y-6">
+                    <div class="pb-5 border-b border-gray-200">
+                        <p class="text-sm text-gray-600 mb-1">ឈ្មោះ</p>
+                        <p class="text-2xl font-bold text-gray-900">${escapeHtml(guest.name)}</p>
+                    </div>
+                    
+                    ${guest.phone ? `
+                    <div class="pb-5 border-b border-gray-200">
+                        <p class="text-sm text-gray-600 mb-1">ទូរស័ព្ទ</p>
+                        <p class="text-xl font-medium text-gray-900">${escapeHtml(guest.phone)}</p>
+                    </div>` : ''}
+                    
+                    <div class="pb-5 border-b border-gray-200">
+                        <p class="text-sm text-gray-600 mb-1">ស្ថានភាព</p>
+                        <p class="text-xl font-bold ${guest.confirmed ? 'text-green-700' : 'text-amber-700'}">
+                            ${guest.confirmed ? 'បានបញ្ជាក់' : 'មិនទាន់បញ្ជាក់'}
+                        </p>
+                    </div>
+                    
+                    ${guest.confirmed_at ? `
+                    <div class="pb-5 border-b border-gray-200">
+                        <p class="text-sm text-gray-600 mb-1">បញ្ជាក់នៅ</p>
+                        <p class="text-lg font-medium text-gray-900">${new Date(guest.confirmed_at).toLocaleString('km-KH')}</p>
+                    </div>` : ''}
+                    
+                    <div class="bg-purple-50 p-6 rounded-xl">
+                        <p class="text-sm text-purple-800 font-medium mb-3">តំណអញ្ជើញចូលរួម</p>
+                        <div class="flex gap-3">
+                            <input type="text" value="${invLink}" readonly id="inviteLink"
+                                   class="flex-1 px-4 py-3 border border-purple-200 rounded-lg bg-white text-sm">
+                            <button onclick="copyLink('${invLink}')" 
+                                    class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition">
+                                ចម្លង
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            showViewModal();
+        }
+
+        async function saveGuest(e) {
+                e.preventDefault();
+
+                const id = document.getElementById('guestId').value;
+                const data = {
+                    name: document.getElementById('guestName').value.trim(),
+                    phone: document.getElementById('guestPhone').value.trim()
+                };
+
+                const action = id ? 'updateGuest' : 'addGuest';
+                if (id) data.id = Number(id);
+
+                try {
+                    const res = await fetch(`${API_URL}?action=${action}`, {
+                        method: 'POST',
+                        body: JSON.stringify(data),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+
+                    const result = await res.json();
+
+                    if (result.success) {
+                        alert(id
+                            ? 'បានកែសម្រួលភ្ញៀវជោគជ័យ!'
+                            : 'បានបន្ថែមភ្ញៀវជោគជ័យ! លេខសម្គាល់: ' + (result.data?.id || 'ថ្មី')
+                        );
+                        closeModal();
+
+                        // Small delay + force reload to make sure new data is fetched
+                        setTimeout(() => {
+                            loadGuests();
+                        }, 1200);   // 1.2 seconds — GAS sometimes needs time to sync
+                    } else {
+                        alert('មានបញ្ហា៖ ' + (result.error || 'មិនស្គាល់កំហុស'));
+                    }
+                } catch (err) {
+                    alert('មិនអាចរក្សាទុកបាន។ សូមព្យាយាមម្ដងទៀត។');
+                }
+            }
+
+        async function deleteGuest(id, name) {
+    if (!confirm(`តើអ្នកប្រាកដជាលុប "${name}" ឬ?`)) return;
+
+    try {
+        const res = await fetch(`${API_URL}?action=deleteGuest`, {
+            method: 'POST',
+            body: JSON.stringify({ id: Number(id) }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }   // ← changed here
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+            alert('បានលុបភ្ញៀវជោគជ័យ!');
+            loadGuests();
+        } else {
+            alert('មានបញ្ហា៖ ' + (result.error || 'មិនស្គាល់កំហុស'));
+        }
+    } catch (err) {
+        alert('មិនអាចលុបបាន។ សូមព្យាយាមម្ដងទៀត។');
+    }
+}
+
+        function copyLink(url) {
+            navigator.clipboard.writeText(url)
+                .then(() => alert('បានចម្លងតំណអញ្ជើញរួចរាល់!'))
+                .catch(() => {
+                    const input = document.getElementById('inviteLink');
+                    input.select();
+                    document.execCommand('copy');
+                    alert('បានចម្លងតំណអញ្ជើញរួចរាល់!');
+                });
+        }
+
+        // Modal helpers
+        function showModal() { document.getElementById('modal').classList.remove('hidden'); document.getElementById('modal').classList.add('flex'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('modal').classList.remove('flex'); }
+        function showViewModal() { document.getElementById('viewModal').classList.remove('hidden'); document.getElementById('viewModal').classList.add('flex'); }
+        function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); document.getElementById('viewModal').classList.remove('flex'); }
+
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('guestsTable').classList.add('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+        }
+        function hideLoading() { document.getElementById('loading').classList.add('hidden'); }
+
+        function showError(msg) {
+            document.getElementById('errorMessage').textContent = msg;
+            document.getElementById('error').classList.remove('hidden');
+            hideLoading();
+        }
+        function hideError() { document.getElementById('error').classList.add('hidden'); }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+
+</html>
