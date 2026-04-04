@@ -1,0 +1,11 @@
+# Main wedding invitation - all pages go to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Exception so you can access admin.html directly
+[[redirects]]
+  from = "/admin.html"
+  to = "/admin.html"
+  status = 200
