@@ -211,7 +211,7 @@
             table.classList.remove('hidden');
 
             tbody.innerHTML = guests.map(guest => {
-                const invLink = `${SITE_URL}invitation.html?token=${guest.token}`;
+                const invLink = `${SITE_URL}index.html?token=${guest.token}`;
 
                 return `
                     <tr class="hover:bg-purple-50/50 transition">
@@ -261,7 +261,7 @@
         }
 
         function viewGuest(guest) {
-            const invLink = `${SITE_URL}invitation.html?token=${guest.token}`;
+            const invLink = `${SITE_URL}index.html?token=${guest.token}`;
 
             document.getElementById('viewContent').innerHTML = `
                 <div class="space-y-6">
